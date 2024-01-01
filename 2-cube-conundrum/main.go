@@ -1,4 +1,4 @@
-package trebuchet
+package cubeconundrum
 
 import (
 	"bufio"
@@ -9,15 +9,14 @@ import (
 )
 
 func Solve() {
-
-	reader, err := adventUtils.FetchInput("./1-trebuchet/lines.txt")
+	reader, err := adventUtils.FetchInput("./2-cube-conundrum/games.txt")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	scanner := bufio.NewScanner(reader)
 	var wg sync.WaitGroup
-	c := make(chan int)
+	c := make(chan GameMeta)
 	for scanner.Scan() {
 		wg.Add(1)
 		go compute(scanner.Text(), c, &wg)
@@ -27,8 +26,8 @@ func Solve() {
 		close(c)
 	}()
 	sum := 0
-	for numberFound := range c {
-		sum += numberFound
+	for gameMeta := range c {
+		sum += gameMeta.gameID
 	}
 	fmt.Println(sum)
 }

@@ -6,6 +6,7 @@ import (
 	"os"
 
 	trebuchet "github.com/anirudh-0/advent-of-code-23/1-trebuchet"
+	cubeConundrum "github.com/anirudh-0/advent-of-code-23/2-cube-conundrum"
 )
 
 func main() {
@@ -16,5 +17,10 @@ func main() {
 	switch os.Args[1] {
 	case "1":
 		trebuchet.Solve()
+	case "2":
+		cubeConundrum.Solve()
+	default:
+		panic("nothing to run")
 	}
+
 }
