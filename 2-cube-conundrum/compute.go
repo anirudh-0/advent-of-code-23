@@ -16,7 +16,6 @@ var colourCountMap map[string]int = map[string]int{
 
 type GameMeta struct {
 	DrawMeta
-	power  int
 	gameID int
 }
 
@@ -61,15 +60,30 @@ func compute(line string, c chan<- GameMeta, wg *sync.WaitGroup) {
 	c <- gameMeta
 }
 
-func processDraw(draw string, isPossibleChan chan DrawMeta, wg *sync.WaitGroup) {
+func processDraw(draw string, drawMetaChan chan DrawMeta, wg *sync.WaitGroup) {
 	defer wg.Done()
 	colourCounts := strings.Split(draw, ", ")
+	drawUnitMetaChan := make(chan DrawMeta)
 	var wgInner sync.WaitGroup
 	for _, v := range colourCounts {
 		wgInner.Add(1)
-		go processColourCount(strings.TrimSpace(v), isPossibleChan, &wgInner)
+		go processColourCount(strings.TrimSpace(v), drawUnitMetaChan, &wgInner)
 	}
-	wgInner.Wait()
+
+	go func() {
+		wgInner.Wait()
+		close(drawUnitMetaChan)
+	}()
+
+	drawMetaAggregate := DrawMeta{isPossible: true}
+	for v := range drawUnitMetaChan {
+		drawMetaAggregate.isPossible = drawMetaAggregate.isPossible && v.isPossible
+		drawMetaAggregate.red += v.red
+		drawMetaAggregate.blue += v.blue
+		drawMetaAggregate.green += v.green
+	}
+	fmt.Printf("%+v\n", drawMetaAggregate)
+	drawMetaChan <- drawMetaAggregate
 }
 
 func processColourCount(v string, c chan<- DrawMeta, wg *sync.WaitGroup) {
@@ -77,10 +91,21 @@ func processColourCount(v string, c chan<- DrawMeta, wg *sync.WaitGroup) {
 	colourCount := strings.Split(v, " ")
 	count, _ := strconv.Atoi(strings.TrimSpace(colourCount[0]))
 	colour := strings.TrimSpace(colourCount[1])
-	fmt.Println(v, colourCount, count, colour)
-	if count > colourCountMap[colour] {
-		c <- false
-	} else {
-		c <- true
+	drawMeta := DrawMeta{}
+	switch colour {
+	case "red":
+		drawMeta.red = count
+	case "blue":
+		drawMeta.blue = count
+	case "green":
+		drawMeta.green = count
 	}
+
+	if count > colourCountMap[colour] {
+		drawMeta.isPossible = false
+	} else {
+		drawMeta.isPossible = true
+	}
+
+	c <- drawMeta
 }

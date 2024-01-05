@@ -26,8 +26,11 @@ func Solve() {
 		close(c)
 	}()
 	sum := 0
+	sumOfPowers := 0
 	for gameMeta := range c {
 		sum += gameMeta.gameID
+		sumOfPowers += gameMeta.red * gameMeta.blue * gameMeta.green
 	}
 	fmt.Println(sum)
+	fmt.Println(sumOfPowers)
 }
